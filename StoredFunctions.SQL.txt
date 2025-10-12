@@ -1,0 +1,383 @@
+Exercicio do Banco:
+
+CREATE OR REPLACE PROCEDURE PROC_QTD_MEDIA_QUESTOES(
+    p_id_disciplina IN NUMBER,
+    p_total_questoes OUT NUMBER,
+    p_media_questoes OUT NUMBER
+) IS
+BEGIN
+    -- Total de questões da disciplina
+    SELECT COUNT(q.QUESTION_ID) INTO p_total_questoes
+    FROM BD2_Questions q
+    JOIN BD2_Submodules s ON q.SUBMODULE_ID = s.SUBMODULE_ID
+    JOIN BD2_Modules m ON s.MODULE_ID = m.MODULE_ID
+    WHERE m.DISCIPLINE_ID = p_id_disciplina;
+
+    -- Média de questões por módulo da disciplina
+    SELECT AVG(qtd) INTO p_media_questoes
+    FROM (
+        SELECT COUNT(q.QUESTION_ID) AS qtd
+        FROM BD2_Questions q
+        JOIN BD2_Submodules s ON q.SUBMODULE_ID = s.SUBMODULE_ID
+        JOIN BD2_Modules m ON s.MODULE_ID = m.MODULE_ID
+        WHERE m.DISCIPLINE_ID = p_id_disciplina
+        GROUP BY m.MODULE_ID
+    );
+END;
+
+DECLARE
+    v_total NUMBER;
+    v_media NUMBER;
+BEGIN
+    PROC_QTD_MEDIA_QUESTOES(1, v_total, v_media);
+    DBMS_OUTPUT.PUT_LINE('Total de questões: ' || v_total);
+    DBMS_OUTPUT.PUT_LINE('Média por módulo: ' || v_media);
+END;
+
+
+STORED PROCEDURES:
+
+Exercicio 1:
+
+CREATE OR REPLACE PROCEDURE sp_imc (
+    p_peso   IN NUMBER,
+    p_altura IN NUMBER
+) AS
+    v_imc       NUMBER;
+    v_classificacao VARCHAR2(20); 
+BEGIN
+    -- cálculo do IMC
+    v_imc := p_peso / (p_altura * p_altura);
+
+    -- classificação
+    IF v_imc <= 19 THEN
+        v_classificacao := 'Subpeso';
+    ELSIF v_imc <= 25 THEN
+        v_classificacao := 'Peso normal';
+    ELSIF v_imc <= 29.9 THEN
+        v_classificacao := 'Sobrepeso';
+    ELSE
+        v_classificacao := 'Obesidade';
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE(v_classificacao || ' , ' || v_imc);
+
+END;
+
+EXEC sp_imc(150, 1.87);
+
+Exercicio 2:
+
+CREATE OR REPLACE PROCEDURE sp_numerospares (
+    p_inicio IN NUMBER,
+    p_fim    IN NUMBER,
+    p_soma   OUT NUMBER
+) AS
+BEGIN
+    p_soma := 0; -- inicializa a soma
+
+    FOR i IN p_inicio .. p_fim LOOP
+        IF MOD(i, 2) = 0 THEN -- verifica se é par
+            p_soma := p_soma + i;
+        END IF;
+    END LOOP;
+END;
+
+--Comando para executar
+
+DECLARE
+    X NUMBER;
+BEGIN
+    sp_numerospares(0, 100, X);
+    DBMS_OUTPUT.PUT_LINE('Soma dos pares: ' || X);
+END;
+
+Exercicio 3:
+
+CREATE OR REPLACE PROCEDURE mostrar_anos_bissextos IS
+BEGIN
+    FOR ano IN 2000..2100 LOOP
+        IF (MOD(ano, 4) = 0 AND MOD(ano, 100) != 0) OR (MOD(ano, 400) = 0) THEN
+            DBMS_OUTPUT.PUT_LINE(ano);
+        END IF;
+    END LOOP;
+END;
+
+execute mostrar_anos_bissextos;
+
+Exercicio 4:
+
+CREATE OR REPLACE PROCEDURE sp_mostrar_disciplinas_aluno (
+    p_id_aluno IN ALUNO.ID_ALUNO%TYPE
+)
+IS
+BEGIN
+    -- O loop FOR já é uma forma de tratamento: se o SELECT não retornar nada,
+    -- o loop simplesmente não executa.
+    FOR registro IN (
+        SELECT
+            d.NOME_DISCIPLINA,
+            p.NOME_PROFESSOR
+        FROM
+            MATRICULA m
+        JOIN
+            DISCIPLINA d ON m.ID_DISCIPLINA = d.ID_DISCIPLINA
+        JOIN
+            PROFESSOR p ON d.ID_PROFESSOR = p.ID_PROFESSOR
+        WHERE
+            m.ID_ALUNO = p_id_aluno
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('Disciplina: ' || registro.NOME_DISCIPLINA || ' | Professor: ' || registro.NOME_PROFESSOR);
+    END LOOP;
+END;
+
+EXECUTE sp_mostrar_disciplinas_aluno(1);
+
+Exercicio 5:
+
+CREATE OR REPLACE FUNCTION fn_is_prime (
+    -- Parâmetro de entrada: p_numero é o número inteiro que queremos verificar.
+    p_numero IN NUMBER
+)
+-- A função deve retornar um número (0 ou 1).
+RETURN NUMBER
+IS
+BEGIN
+    -- 1. Primeiro, tratamos os casos básicos.
+    --    Números menores ou iguais a 1 não são primos por definição.
+    IF p_numero <= 1 THEN
+        RETURN 0; -- Retorna 0 (não é primo)
+    END IF;
+
+    -- 2. Criamos um laço para testar os divisores.
+    --    Uma otimização matemática é testar apenas até a raiz quadrada do número.
+    --    Se houver um divisor maior que a raiz quadrada, haverá um correspondente menor.
+    FOR i IN 2..TRUNC(SQRT(p_numero)) LOOP
+
+        -- 3. Usamos a função MOD para pegar o resto da divisão.
+        --    Se o resto da divisão de p_numero por 'i' for 0, encontramos um divisor.
+        IF MOD(p_numero, i) = 0 THEN
+            -- Se encontramos um divisor, o número não é primo.
+            RETURN 0; -- Retorna 0 (não é primo) e encerra a função imediatamente.
+        END IF;
+
+    END LOOP;
+
+    -- 4. Se o laço terminar sem encontrar nenhum divisor,
+    --    significa que o número é divisível apenas por 1 e por ele mesmo.
+    --    Portanto, ele é primo.
+    RETURN 1; -- Retorna 1 (é primo)
+
+END;
+
+SELECT
+    fn_is_prime(7) AS "7 é primo?",   -- Resultado esperado: 1
+    fn_is_prime(10) AS "10 é primo?",  -- Resultado esperado: 0
+    fn_is_prime(13) AS "13 é primo?",  -- Resultado esperado: 1
+    fn_is_prime(1) AS "1 é primo?"     -- Resultado esperado: 0
+FROM
+    DUAL;
+
+Exercicio 6:
+
+CREATE OR REPLACE FUNCTION fn_fahrenheit_to_celsius (
+    -- Parâmetro de ENTRADA: A temperatura em graus Fahrenheit que queremos converter.
+    -- O tipo de dado é NUMBER para aceitar valores decimais.
+    p_fahrenheit IN NUMBER
+)
+-- A função deve RETORNAR um valor do tipo NUMBER (a temperatura em Celsius).
+RETURN NUMBER
+IS
+BEGIN
+    -- Aplica a fórmula de conversão e retorna o resultado diretamente.
+    -- C = (F - 32) / 1.8
+    RETURN (p_fahrenheit - 32) / 1.8;
+END fn_fahrenheit_to_celsius;
+
+DECLARE
+    v_temp_fahrenheit NUMBER := 77;
+    v_temp_celsius    NUMBER;
+BEGIN
+    v_temp_celsius := fn_fahrenheit_to_celsius(v_temp_fahrenheit);
+
+    DBMS_OUTPUT.PUT_LINE(
+        v_temp_fahrenheit || ' graus Fahrenheit equivalem a ' ||
+        ROUND(v_temp_celsius, 2) || ' graus Celsius.' -- Arredonda para 2 casas decimais
+    );
+END;
+
+Exercicio 7:
+
+CREATE OR REPLACE FUNCTION fn_get_disciplina_professor (
+    -- Parâmetro de ENTRADA: O ID da disciplina que queremos consultar.
+    p_id_disciplina IN DISCIPLINA.ID_DISCIPLINA%TYPE
+)
+-- A função deve RETORNAR uma string (texto).
+RETURN VARCHAR2
+IS
+    -- Variável local para armazenar o texto final.
+    v_resultado VARCHAR2(150);
+BEGIN
+    -- Executa a consulta que une as tabelas DISCIPLINA e PROFESSOR.
+    SELECT
+        -- Concatena o nome da disciplina e o nome do professor.
+        d.NOME_DISCIPLINA || ' - ' || p.NOME_PROFESSOR
+    INTO
+        -- O resultado da concatenação é armazenado na nossa variável local.
+        v_resultado
+    FROM
+        DISCIPLINA d
+    JOIN
+        PROFESSOR p ON d.ID_PROFESSOR = p.ID_PROFESSOR
+    WHERE
+        -- Filtra a busca para encontrar a disciplina com o ID recebido.
+        d.ID_DISCIPLINA = p_id_disciplina;
+
+    -- Retorna a string que foi montada e armazenada na variável.
+    RETURN v_resultado;
+
+END fn_get_disciplina_professor;
+
+SELECT
+    fn_get_disciplina_professor(1) AS DISCIPLINA_1,
+    fn_get_disciplina_professor(4) AS DISCIPLINA_4,
+    fn_get_disciplina_professor(99) AS DISCIPLINA_INEXISTENTE -- Testando um ID que não existe
+FROM
+    DUAL;
+	
+Exercicio 8:
+
+--Procedure para adicionar Professor
+
+CREATE OR REPLACE PROCEDURE sp_add_professor (
+    -- Parâmetros de ENTRADA para os dados do professor
+    p_cod_professor PROFESSOR.COD_PROFESSOR%TYPE,
+    p_nome_professor PROFESSOR.NOME_PROFESSOR%TYPE,
+    p_id_usuario PROFESSOR.ID_USUARIO%TYPE
+) IS
+BEGIN
+    -- Insere um novo registro na tabela PROFESSOR com os dados recebidos
+    INSERT INTO PROFESSOR (COD_PROFESSOR, NOME_PROFESSOR, ID_USUARIO)
+    VALUES (p_cod_professor, p_nome_professor, p_id_usuario);
+    
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Professor ' || p_nome_professor || ' adicionado com sucesso!');
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro ao adicionar professor: ' || SQLERRM);
+END sp_add_professor;
+
+EXEC sp_add_professor('P005', 'Novo Professor', 5);
+
+--Procedure para adicionar Aluno:
+
+CREATE OR REPLACE PROCEDURE sp_add_aluno (
+    p_cod_aluno ALUNO.COD_ALUNO%TYPE,
+    p_nome_aluno ALUNO.NOME_ALUNO%TYPE,
+    p_idade ALUNO.IDADE%TYPE,
+    p_id_usuario ALUNO.ID_USUARIO%TYPE
+) IS
+BEGIN
+    INSERT INTO ALUNO (COD_ALUNO, NOME_ALUNO, IDADE, ID_USUARIO)
+    VALUES (p_cod_aluno, p_nome_aluno, p_idade, p_id_usuario);
+    
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Aluno ' || p_nome_aluno || ' adicionado com sucesso!');
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro ao adicionar aluno: ' || SQLERRM);
+END sp_add_aluno;
+
+EXEC sp_add_aluno('1059999', 'NOVO ALUNO DA SILVA', 20, 18);
+
+--Procedure para adicionar Disciplina:
+
+CREATE OR REPLACE PROCEDURE sp_add_disciplina (
+    p_cod_disciplina DISCIPLINA.COD_DISCIPLINA%TYPE,
+    p_nome_disciplina DISCIPLINA.NOME_DISCIPLINA%TYPE,
+    p_id_professor DISCIPLINA.ID_PROFESSOR%TYPE
+) IS
+BEGIN
+    INSERT INTO DISCIPLINA (COD_DISCIPLINA, NOME_DISCIPLINA, ID_PROFESSOR)
+    VALUES (p_cod_disciplina, p_nome_disciplina, p_id_professor);
+    
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Disciplina ' || p_nome_disciplina || ' adicionada com sucesso!');
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro ao adicionar disciplina: ' || SQLERRM);
+END sp_add_disciplina;
+
+EXEC sp_add_disciplina('PW1', 'Programação Web I', 1);
+
+--Procedure para adicionar matricula:
+
+CREATE OR REPLACE PROCEDURE sp_add_matricula (
+    p_id_aluno MATRICULA.ID_ALUNO%TYPE,
+    p_id_disciplina MATRICULA.ID_DISCIPLINA%TYPE,
+    p_periodo MATRICULA.PERIODO%TYPE
+) IS
+BEGIN
+    INSERT INTO MATRICULA (ID_ALUNO, ID_DISCIPLINA, PERIODO)
+    VALUES (p_id_aluno, p_id_disciplina, p_periodo);
+    
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Matrícula do aluno ID ' || p_id_aluno || ' na disciplina ID ' || p_id_disciplina || ' realizada com sucesso!');
+EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN -- Erro específico para quando a matrícula já existe
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro: O aluno já está matriculado nesta disciplina.');
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro ao realizar matrícula: ' || SQLERRM);
+END sp_add_matricula;
+
+EXEC sp_add_matricula(1, 2, 2);
+
+--Procedure para adicionar avaliação:
+
+CREATE OR REPLACE PROCEDURE sp_add_avaliacao (
+    p_cod_avaliacao AVALIACAO.COD_AVALIACAO%TYPE,
+    p_descricao AVALIACAO.DESCRICAO%TYPE,
+    p_id_disciplina AVALIACAO.ID_DISCIPLINA%TYPE
+) IS
+BEGIN
+    INSERT INTO AVALIACAO (COD_AVALIACAO, DESCRICAO, ID_DISCIPLINA)
+    VALUES (p_cod_avaliacao, p_descricao, p_id_disciplina);
+    
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Avaliação ' || p_cod_avaliacao || ' adicionada com sucesso!');
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro ao adicionar avaliação: ' || SQLERRM);
+END sp_add_avaliacao;
+
+EXEC sp_add_avaliacao('AVAL4 - BD1', 'Trabalho Prático', 1);
+
+--Procedure para adicionar Nota:
+
+CREATE OR REPLACE PROCEDURE sp_add_aluno_avaliacao (
+    p_id_aluno ALUNO_AVALIACAO.ID_ALUNO%TYPE,
+    p_id_avaliacao ALUNO_AVALIACAO.ID_AVALIACAO%TYPE,
+    p_nota ALUNO_AVALIACAO.NOTA%TYPE
+) IS
+BEGIN
+    INSERT INTO ALUNO_AVALIACAO (ID_ALUNO, ID_AVALIACAO, NOTA)
+    VALUES (p_id_aluno, p_id_avaliacao, p_nota);
+    
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Nota ' || p_nota || ' lançada para o aluno ID ' || p_id_aluno || ' na avaliação ID ' || p_id_avaliacao);
+EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro: Já existe uma nota para este aluno nesta avaliação.');
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Erro ao lançar nota: ' || SQLERRM);
+END sp_add_aluno_avaliacao;
+
+EXEC sp_add_aluno_avaliacao(1, 1, 7.5);
