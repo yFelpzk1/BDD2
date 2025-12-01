@@ -35,6 +35,10 @@ Insert into EMPREGADOS (CODIGO,NOME,SOBRENOME,DATA_NASCIMENTO,DATA_ADMISSAO,DATA
 values (7,'Charles','Leclerc',to_date('21-DEC-97','DD-MON-RR'),to_date('25-JAN-16','DD-MON-RR'),null,5000,'Infiel',70);
 Insert into EMPREGADOS (CODIGO,NOME,SOBRENOME,DATA_NASCIMENTO,DATA_ADMISSAO,DATA_RESCISAO,SALARIO,PROFISSAO,DEPTO) 
 values (8,'Lewis','Hamilton',to_date('10-APR-00','DD-MON-RR'),to_date('25-FEB-24','DD-MON-RR'),null,5500,'Aposentado',80);
+Insert into EMPREGADOS (CODIGO,NOME,SOBRENOME,DATA_NASCIMENTO,DATA_ADMISSAO,DATA_RESCISAO,SALARIO,PROFISSAO,DEPTO) 
+values (9,'Franz','Hermann',to_date('04-MAY-98','DD-MON-RR'),to_date('22-JUL-25','DD-MON-RR'),null,5800,'Piloto de GT3',10);
+Insert into EMPREGADOS (CODIGO,NOME,SOBRENOME,DATA_NASCIMENTO,DATA_ADMISSAO,DATA_RESCISAO,SALARIO,PROFISSAO,DEPTO)
+values (10,'Daniel','Ricciardo',to_date('14-AUG-00','DD-MON-RR'),to_date('27-FEB-22','DD-MON-RR'),null,5800,'Ex-Piloto',10);
 
 --Insert de Departamentos
 
@@ -45,4 +49,5 @@ Insert into DEPARTAMENTOS (CODIGO,DESCRICAO) values (40,'Marketing');
 Insert into DEPARTAMENTOS (CODIGO,DESCRICAO) values (50,'Vendas');
 Insert into DEPARTAMENTOS (CODIGO,DESCRICAO) values (60,'Especial');
 Insert into DEPARTAMENTOS (CODIGO,DESCRICAO) values (70,'Red Burro');
+
 Insert into DEPARTAMENTOS (CODIGO,DESCRICAO) values (80,'Burrari');
