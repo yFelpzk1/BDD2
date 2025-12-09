@@ -1,1 +1,1 @@
-Arquivos da materia Bancos de dados II feita pelo SQLDEVELOPER da Oracle
+Arquivos da materia Bancos de dados II feita no SQLDEVELOPER da Oracle
